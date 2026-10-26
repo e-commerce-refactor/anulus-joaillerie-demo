@@ -49,21 +49,27 @@ export default function CodModal({ product, onClose, onSuccess }: CodModalProps)
 
     // Persist to Supabase
     try {
+      const summaryText = product.category === 'Bagues' 
+        ? `${product.name} (Taille: ${ringSize})` 
+        : product.name;
+
       supabase.from('orders').insert([
         {
-          order_id: generatedOrderId,
+          ref: generatedOrderId,
           customer_name: fullName,
-          customer_phone: phone,
+          phone: cleanPhone,
           city: city,
-          address: address,
-          ring_size: product.category === 'Bagues' ? ringSize : null,
-          product_name: product.name,
-          product_price_mad: product.priceMad,
-          shipping_fee_mad: shippingFee,
-          total_mad: totalToPay,
-          status: 'pending_confirmation'
+          address: address || 'Non précisée',
+          items_summary: summaryText,
+          total: totalToPay,
+          status: 'en_attente',
+          notes: `Livraison: ${shippingFee === 0 ? 'Gratuite (Casablanca)' : '35 DH (Hors Casablanca)'}`
         }
-      ]).then(() => {});
+      ]).then((res) => {
+        if (res.error) {
+          console.warn('Supabase insert warning:', res.error);
+        }
+      });
     } catch (err) {
       console.log('Supabase sync notice:', err);
     }
