@@ -3,6 +3,7 @@
 
 import React, { useState } from 'react';
 import { Product, MOROCCAN_CITIES } from '../data/products';
+import { supabase } from '../lib/supabase';
 
 interface CodModalProps {
   product: Product | null;
@@ -44,11 +45,33 @@ export default function CodModal({ product, onClose, onSuccess }: CodModalProps)
     }
 
     setSubmitting(true);
+    const generatedOrderId = `ANL-${Math.floor(100000 + Math.random() * 900000)}`;
+
+    // Persist to Supabase
+    try {
+      supabase.from('orders').insert([
+        {
+          order_id: generatedOrderId,
+          customer_name: fullName,
+          customer_phone: phone,
+          city: city,
+          address: address,
+          ring_size: product.category === 'Bagues' ? ringSize : null,
+          product_name: product.name,
+          product_price_mad: product.priceMad,
+          shipping_fee_mad: shippingFee,
+          total_mad: totalToPay,
+          status: 'pending_confirmation'
+        }
+      ]).then(() => {});
+    } catch (err) {
+      console.log('Supabase sync notice:', err);
+    }
 
     setTimeout(() => {
       setSubmitting(false);
       onSuccess({
-        orderId: `ANL-${Math.floor(100000 + Math.random() * 900000)}`,
+        orderId: generatedOrderId,
         productName: product.name,
         priceMad: product.priceMad,
         shippingFee,
